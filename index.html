@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BB84 szimulátor</title>
+  <meta name="description" content="Interaktív, léptethető szimuláció a BB84 kvantumkulcs-szétosztási protokollról, lehallgatóval.">
+  <!--
+    BB84 quantum key distribution simulator.
+    This file holds the page structure only: styling lives in css/style.css,
+    behaviour in js/. Elements with an id are read or filled by the scripts.
+    It works offline from file:// (no external resources, no ES modules).
+  -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <noscript>
+    <p class="noscript">A szimulátor futtatásához engedélyezni kell a JavaScriptet.</p>
+  </noscript>
+
+  <!-- ===================================================================== -->
+  <!-- Header: title and view switch                                          -->
+  <!-- ===================================================================== -->
+  <header class="app-header">
+    <div class="brand">
+      <svg class="brand-logo" viewBox="0 0 36 36" width="36" height="36" aria-hidden="true">
+        <circle cx="18" cy="18" r="16" fill="none" stroke="currentColor" stroke-width="1.5"/>
+        <line class="brand-plus" x1="18" y1="6" x2="18" y2="30" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+        <line class="brand-diag" x1="9.5" y1="26.5" x2="26.5" y2="9.5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+      </svg>
+      <div>
+        <p class="brand-title">BB84 kvantumkulcs-szimulátor</p>
+      </div>
+    </div>
+    <nav class="view-switch" aria-label="Nézet">
+      <button type="button" data-view="step" aria-pressed="true">Léptetés</button>
+      <button type="button" data-view="stats" aria-pressed="false">Statisztika</button>
+    </nav>
+  </header>
+
+  <!-- ===================================================================== -->
+  <!-- View 1: step-by-step protocol run                                      -->
+  <!-- ===================================================================== -->
+  <main id="view-step" class="view">
+
+    <aside class="sidebar">
+      <!-- Settings of the run -->
+      <section class="panel" aria-labelledby="settings-title">
+        <h2 id="settings-title" class="panel-label">Beállítások</h2>
+
+        <div class="field">
+          <div class="field-head">
+            <label for="photons">Fotonok száma</label>
+            <output id="photons-out" for="photons">12</output>
+          </div>
+          <input id="photons" type="range" min="8" max="32" step="1" value="12">
+        </div>
+
+        <div class="switch-row">
+          <label for="eve-enabled">
+            <span class="switch-title">Lehallgató (Eve)</span>
+            <span class="hint">Elfogja, megméri és újraküldi a fotonokat</span>
+          </label>
+          <input id="eve-enabled" type="checkbox" role="switch">
+        </div>
+
+        <!-- Only shown while Eve is enabled -->
+        <div class="field" id="eve-rate-field" hidden>
+          <div class="field-head">
+            <label for="eve-rate">Lehallgatási arány</label>
+            <output id="eve-rate-out" for="eve-rate">100%</output>
+          </div>
+          <input id="eve-rate" type="range" min="0" max="100" step="10" value="100">
+        </div>
+
+        <div class="field">
+          <div class="field-head">
+            <label for="threshold">QBER-küszöb</label>
+            <output id="threshold-out" for="threshold">11%</output>
+          </div>
+          <input id="threshold" type="range" min="5" max="25" step="1" value="11">
+        </div>
+
+        <div class="field">
+          <label for="seed">Seed</label>
+          <div class="seed-row">
+            <input id="seed" type="text" value="1150" autocomplete="off" spellcheck="false">
+            <button id="seed-random" type="button">Véletlen</button>
+          </div>
+        </div>
+
+        <label class="check-row" for="fixed-basis">
+          <input id="fixed-basis" type="checkbox">
+          <span>
+            <span class="check-title">Rögzített bázis (demó)</span>
+            <span class="hint">A bázis nyilvános szabály: mindenki + bázist használ, így Eve nem bukik le</span>
+          </span>
+        </label>
+
+        <!-- Only shown after the user has edited a cell in the table -->
+        <button id="reset-edits" type="button" class="link-button" hidden>Kézi módosítások törlése</button>
+      </section>
+
+      <!-- Summary of the current run -->
+      <section class="panel" aria-labelledby="result-title">
+        <h2 id="result-title" class="panel-label">Eredmény</h2>
+        <dl class="metrics">
+          <div><dt>Szűrt bitek</dt><dd id="metric-sifted">–</dd></div>
+          <div><dt>Ellenőrzött bitek</dt><dd id="metric-sampled">–</dd></div>
+          <div><dt>Eltérés a mintában</dt><dd id="metric-sample-errors">–</dd></div>
+          <div><dt>Végső kulcs</dt><dd id="metric-key">–</dd></div>
+        </dl>
+        <div class="qber">
+          <div class="qber-head">
+            <span>QBER</span>
+            <strong id="qber-value">–</strong>
+          </div>
+          <div class="qber-bar" aria-hidden="true">
+            <div class="qber-fill" id="qber-fill"></div>
+            <div class="qber-threshold" id="qber-threshold"></div>
+          </div>
+          <div class="qber-scale" aria-hidden="true">
+            <span>0%</span>
+            <span id="qber-threshold-label">küszöb 11%</span>
+            <span>50%</span>
+          </div>
+        </div>
+      </section>
+    </aside>
+
+    <div class="content">
+      <!-- Stepper: current step, controls and the list of all steps -->
+      <section class="panel stepper" aria-labelledby="step-title">
+        <div class="stepper-head">
+          <div class="stepper-title">
+            <span class="step-counter"><span id="step-number">1</span> / 8</span>
+            <h1 id="step-title">Alice bitjei</h1>
+            <span class="badge" id="step-actor">Alice</span>
+          </div>
+          <div class="stepper-controls">
+            <button id="step-prev" type="button">Előző</button>
+            <button id="step-next" type="button" class="primary">Következő lépés</button>
+            <button id="step-play" type="button">Lejátszás</button>
+            <button id="step-restart" type="button" class="quiet">Újrakezdés</button>
+          </div>
+        </div>
+        <p id="step-text" class="step-text" aria-live="polite">Alice minden fotonhoz véletlen bitet sorsol.</p>
+        <ol class="step-list" id="step-list">
+          <li><button type="button" data-step="1"><span class="step-num">1</span>Alice bitjei</button></li>
+          <li><button type="button" data-step="2"><span class="step-num">2</span>Alice bázisai</button></li>
+          <li><button type="button" data-step="3"><span class="step-num">3</span>Eve mérése</button></li>
+          <li><button type="button" data-step="4"><span class="step-num">4</span>Bob bázisai</button></li>
+          <li><button type="button" data-step="5"><span class="step-num">5</span>Bob mérése</button></li>
+          <li><button type="button" data-step="6"><span class="step-num">6</span>Bázisegyeztetés</button></li>
+          <li><button type="button" data-step="7"><span class="step-num">7</span>Ellenőrzés</button></li>
+          <li><button type="button" data-step="8"><span class="step-num">8</span>Döntés</button></li>
+        </ol>
+      </section>
+
+      <!-- Channels: Alice -> (Eve) -> Bob, and the public channel below -->
+      <section class="panel" aria-labelledby="channel-title">
+        <h2 id="channel-title">Csatornák</h2>
+        <div class="channel" id="channel">
+          <div class="node" id="node-alice"><strong>Alice</strong><span>küldő</span></div>
+          <div class="link">
+            <div class="photon-track" id="track-1"></div>
+            <span class="link-label">kvantumcsatorna</span>
+          </div>
+          <div class="node node-eve" id="node-eve" hidden><strong>Eve</strong><span>elfog · mér · újraküld</span></div>
+          <div class="link" id="link-eve-bob" hidden>
+            <div class="photon-track" id="track-2"></div>
+            <span class="link-label">kvantumcsatorna</span>
+          </div>
+          <div class="node" id="node-bob"><strong>Bob</strong><span>fogadó</span></div>
+        </div>
+        <div class="public-channel" id="public-channel">
+          <span class="panel-label">Nyilvános csatorna</span>
+          <span id="public-text">Még nincs forgalom. A 6. lépéstől itt egyeztetik a bázisokat és az ellenőrző biteket.</span>
+        </div>
+      </section>
+
+      <!-- Protocol table: one column per photon, one row per protocol value -->
+      <section class="panel" aria-labelledby="table-title">
+        <div class="panel-head">
+          <h2 id="table-title">Protokolltáblázat</h2>
+          <span class="panel-meta" id="table-meta"></span>
+        </div>
+        <p class="hint">A ceruzával jelölt sorok celláira kattintva az érték átírható.</p>
+        <div class="table-scroll">
+          <table class="protocol-table" id="protocol-table">
+            <caption class="sr-only">A protokoll lépései fotononként</caption>
+            <thead></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <ul class="legend">
+          <li><span class="swatch basis-plus">+</span>egyenes bázis: — = 0, | = 1</li>
+          <li><span class="swatch basis-diag">×</span>átlós bázis: / = 0, \ = 1</li>
+          <li><span class="swatch random"></span>véletlen mérési eredmény</li>
+          <li><span class="swatch disturbed"></span>Eve által megváltoztatott foton</li>
+          <li><span class="swatch error"></span>Alice bitjétől eltérő bit</li>
+          <li><span class="swatch-text match">=</span><span class="swatch-text mismatch">≠</span>ellenőrzött bit egyezik / eltér</li>
+        </ul>
+      </section>
+
+      <!-- Final key and decision (shown in step 8) -->
+      <section class="panel" aria-labelledby="key-title">
+        <h2 id="key-title">Kulcs és döntés</h2>
+        <p class="hint" id="key-pending">A végső kulcs és a döntés a 8. lépésben jelenik meg.</p>
+        <div id="key-final" hidden>
+          <div class="key-row">
+            <span class="key-label">Alice kulcsa</span>
+            <div class="key-bits" id="key-alice"></div>
+          </div>
+          <div class="key-row">
+            <span class="key-label">Bob kulcsa</span>
+            <div class="key-bits" id="key-bob"></div>
+          </div>
+          <p class="hint" id="key-note" hidden></p>
+          <div class="decision" id="decision" role="status">
+            <strong id="decision-title"></strong>
+            <p id="decision-text"></p>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- ===================================================================== -->
+  <!-- View 2: statistics over many runs                                     -->
+  <!-- ===================================================================== -->
+  <main id="view-stats" class="view" hidden>
+
+    <aside class="sidebar">
+      <section class="panel" aria-labelledby="stats-settings-title">
+        <h2 id="stats-settings-title" class="panel-label">Futás beállításai</h2>
+
+        <fieldset class="segmented">
+          <legend>Fotonok futásonként</legend>
+          <label><input type="radio" name="stats-photons" value="12"><span>12</span></label>
+          <label><input type="radio" name="stats-photons" value="100"><span>100</span></label>
+          <label><input type="radio" name="stats-photons" value="1000" checked><span>1000</span></label>
+          <label><input type="radio" name="stats-photons" value="5000"><span>5000</span></label>
+        </fieldset>
+
+        <div class="field">
+          <div class="field-head">
+            <label for="stats-eve-rate">Lehallgatási arány (p)</label>
+            <output id="stats-eve-rate-out" for="stats-eve-rate">50%</output>
+          </div>
+          <input id="stats-eve-rate" type="range" min="0" max="100" step="5" value="50">
+        </div>
+
+        <div class="field">
+          <div class="field-head">
+            <label for="stats-threshold">QBER-küszöb</label>
+            <output id="stats-threshold-out" for="stats-threshold">11%</output>
+          </div>
+          <input id="stats-threshold" type="range" min="5" max="25" step="1" value="11">
+        </div>
+
+        <button id="stats-run" type="button" class="primary">Újrafuttatás új seedekkel</button>
+      </section>
+
+      <section class="panel" aria-labelledby="stats-facts-title">
+        <h2 id="stats-facts-title" class="panel-label">Egy futás várhatóan</h2>
+        <dl class="metrics">
+          <div><dt>Szűrt bitek</dt><dd id="stats-fact-sifted">–</dd></div>
+          <div><dt>Ellenőrzött bitek</dt><dd id="stats-fact-sampled">–</dd></div>
+          <div><dt>Várható QBER</dt><dd id="stats-fact-qber">–</dd></div>
+          <div><dt>Ingadozás (±1 szórás)</dt><dd id="stats-fact-spread">–</dd></div>
+        </dl>
+        <p class="hint">A szűrés után a fotonok kb. fele marad, ennek a felét ellenőrzik. Kevés fotonnál a mért QBER erősen ingadozik.</p>
+      </section>
+    </aside>
+
+    <div class="content">
+      <section class="panel" aria-labelledby="stats-chart-title">
+        <div class="panel-head">
+          <div>
+            <h1 id="stats-chart-title">QBER a lehallgatási arány függvényében</h1>
+            <p class="hint">Vonal: a várható érték (QBER = p / 4). Sáv: egy futás szokásos ingadozása. Pontok: valódi szimulált futások.</p>
+          </div>
+          <div class="stats-readout">
+            <span id="stats-readout-p">p = 50%</span>
+            <strong id="stats-readout-qber">–</strong>
+            <span class="badge" id="stats-readout-badge">–</span>
+          </div>
+        </div>
+        <div class="chart" id="stats-chart"></div>
+      </section>
+
+      <!-- Typical scenarios (no Eve, partial and full attack, fixed basis), filled by stats.js -->
+      <section class="scenarios" id="stats-scenarios" aria-label="Jellemző esetek"></section>
+    </div>
+  </main>
+
+  <footer class="app-footer">
+    <p>BB84 kvantumkulcs-szétosztás szimulációja</p>
+  </footer>
+
+  <!-- Load order matters: each script uses the ones loaded before it. -->
+  <script src="js/rng.js"></script>
+  <script src="js/protocol.js"></script>
+  <script src="js/stats.js"></script>
+  <script src="js/ui-table.js"></script>
+  <script src="js/ui-channel.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
