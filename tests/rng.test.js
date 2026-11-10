@@ -1,3 +1,7 @@
+/**
+ * Tests for js/rng.js.
+ * Run all tests from the project root with:  node --test
+ */
 'use strict';
 
 const { describe, it } = require('node:test');

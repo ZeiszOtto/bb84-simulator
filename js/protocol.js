@@ -1,5 +1,5 @@
 /**
- * protocol.js — Core BB84 protocol logic (no DOM, no UI).
+ * protocol.js — Core BB84 protocol logic.
  *
  * Every function here is pure: the same settings and overrides always
  * produce the same run. The UI only decides how much of a finished run to
@@ -59,8 +59,7 @@
     eveEnabled: false,
     eveRate: 1,            // probability that Eve intercepts a given photon
     sampleFraction: 0.5,   // share of the sifted bits revealed for the error check
-    threshold: 0.11,       // abort when QBER >= threshold
-    fixedBasis: false      // demo mode: every party always uses '+'
+    threshold: 0.11        // abort when QBER >= threshold
   });
 
   const MAX_PHOTONS = 100000;
@@ -96,8 +95,7 @@
       eveEnabled: Boolean(s.eveEnabled),
       eveRate: clampNumber(s.eveRate, 0, 1, DEFAULTS.eveRate),
       sampleFraction: clampNumber(s.sampleFraction, 0, 1, DEFAULTS.sampleFraction),
-      threshold: clampNumber(s.threshold, 0, 1, DEFAULTS.threshold),
-      fixedBasis: Boolean(s.fixedBasis)
+      threshold: clampNumber(s.threshold, 0, 1, DEFAULTS.threshold)
     });
   }
 
@@ -211,7 +209,7 @@
    * @param {object} [overrides] - Manual edits, keyed by photon index:
    *   { aliceBit: {i: 0|1}, aliceBasis: {i: '+'|'x'},
    *     eveBasis: {i: '+'|'x'}, bobBasis: {i: '+'|'x'} }
-   *   An override always wins over both the random value and fixedBasis.
+   *   An override always wins over the random value.
    *   Measurement results are never overridden: they are recomputed from
    *   the (possibly edited) choices, using the same pre-drawn coins.
    * @returns {object} The full run; the fields are listed at the end.
@@ -221,17 +219,13 @@
     const ov = overrides || {};
     const tape = drawTape(s.seed, s.photons);
 
-    // In fixedBasis mode the basis is a public rule of the protocol, so every
-    // party, Eve included, uses '+'. Otherwise each uses its random pick.
-    const chooseBasis = (randomBasis) => (s.fixedBasis ? BASIS.RECTILINEAR : randomBasis);
-
     const photons = [];
     for (let i = 0; i < s.photons; i++) {
       const t = tape[i];
 
       // Steps 1-2: Alice prepares a photon.
       const aliceBit = resolve(ov.aliceBit, i, t.aliceBit, [0, 1]);
-      const aliceBasis = resolve(ov.aliceBasis, i, chooseBasis(t.aliceBasis), BASES);
+      const aliceBasis = resolve(ov.aliceBasis, i, t.aliceBasis, BASES);
       const sent = { basis: aliceBasis, bit: aliceBit };
 
       // Step 3: Eve may intercept, measure and resend.
@@ -241,7 +235,7 @@
       let eveRandom = false;   // true: wrong basis, so she also disturbed the photon
       let arriving = sent;     // the photon that actually reaches Bob
       if (intercepted) {
-        eveBasis = resolve(ov.eveBasis, i, chooseBasis(t.eveBasis), BASES);
+        eveBasis = resolve(ov.eveBasis, i, t.eveBasis, BASES);
         const e = measure(sent, eveBasis, t.eveCoin);
         eveBit = e.bit;
         eveRandom = e.random;
@@ -249,7 +243,7 @@
       }
 
       // Steps 4-5: Bob measures whatever arrives.
-      const bobBasis = resolve(ov.bobBasis, i, chooseBasis(t.bobBasis), BASES);
+      const bobBasis = resolve(ov.bobBasis, i, t.bobBasis, BASES);
       const b = measure(arriving, bobBasis, t.bobCoin);
 
       // Step 6 compares only Alice's and Bob's bases, never Eve's.

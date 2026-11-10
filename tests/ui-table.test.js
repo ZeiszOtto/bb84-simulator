@@ -7,6 +7,7 @@
 const { describe, it } = require('node:test');
 const assert = require('node:assert/strict');
 const P = require('../js/protocol.js');
+const C = require('../js/ui-common.js');
 const T = require('../js/ui-table.js');
 
 const PLUS = P.BASIS.RECTILINEAR;
@@ -76,9 +77,9 @@ describe('step by step', () => {
 
 describe('cell contents', () => {
   it('shows bases as + and ×, and photons by their polarization', () => {
-    assert.equal(T.basisText(PLUS), '+');
-    assert.equal(T.basisText(DIAG), '×');
-    assert.deepEqual([T.photonGlyph(PLUS, 0), T.photonGlyph(PLUS, 1), T.photonGlyph(DIAG, 0), T.photonGlyph(DIAG, 1)],
+    assert.equal(C.basisText(PLUS), '+');
+    assert.equal(C.basisText(DIAG), '×');
+    assert.deepEqual([C.photonGlyph(PLUS, 0), C.photonGlyph(PLUS, 1), C.photonGlyph(DIAG, 0), C.photonGlyph(DIAG, 1)],
       ['—', '|', '/', '\\']);
   });
 

@@ -71,7 +71,6 @@ describe('measure', () => {
   });
 });
 
-
 describe('angleOf', () => {
   it('maps the four BB84 states to 0, 90, 45 and 135 degrees', () => {
     assert.equal(P.angleOf(PLUS, 0), 0);
@@ -80,7 +79,6 @@ describe('angleOf', () => {
     assert.equal(P.angleOf(DIAG, 1), 135);
   });
 });
-
 
 describe('normalizeSettings', () => {
   it('fills in every missing setting from DEFAULTS', () => {
@@ -148,7 +146,7 @@ describe('demo run (seed 1150, 12 photons)', () => {
 // -----------------------------------------------------------------------------
 
 describe('rules that hold for every run', () => {
-  // 150 runs with varied seeds, photon counts, Eve settings, sample sizes and modes.
+  // 150 runs with varied seeds, photon counts, Eve settings and sample sizes.
   const runs = [];
   for (let seed = 1; seed <= 150; seed++) {
     runs.push(P.runProtocol({
@@ -156,8 +154,7 @@ describe('rules that hold for every run', () => {
       photons: 1 + (seed % 40),
       eveEnabled: seed % 2 === 0,
       eveRate: (seed % 5) / 4,                       // 0, 0.25, 0.5, 0.75, 1
-      sampleFraction: [0, 0.25, 0.5, 1][seed % 4],
-      fixedBasis: seed % 7 === 0
+      sampleFraction: [0, 0.25, 0.5, 1][seed % 4]
     }));
   }
 
@@ -270,19 +267,6 @@ describe('rules that hold for every run', () => {
       }
     }
   });
-
-  it('uses only the + basis in fixed-basis mode', () => {
-    for (const run of runs.filter((r) => r.settings.fixedBasis)) {
-      for (const p of run.photons) {
-        assert.equal(p.aliceBasis, PLUS);
-        assert.equal(p.bobBasis, PLUS);
-        if (p.intercepted) {
-          assert.equal(p.eveBasis, PLUS);
-        }
-      }
-      assert.equal(run.siftedIndices.length, run.photons.length);
-    }
-  });
 });
 
 // -----------------------------------------------------------------------------
@@ -366,13 +350,6 @@ describe('eavesdropping statistics (100 000 photons)', () => {
     });
   }
 
-  it('makes Eve undetectable in fixed-basis mode', () => {
-    const run = P.runProtocol({ seed: 'stats', photons: N, eveEnabled: true, fixedBasis: true });
-    assert.equal(run.siftedIndices.length, N);
-    assert.equal(run.siftedErrors, 0);
-    assert.equal(run.decision, DECISION.ACCEPTED);
-  });
-
   it('detects a full intercept-resend attack with 1000 photons', () => {
     const run = P.runProtocol({ seed: 'stats', photons: 1000, eveEnabled: true, eveRate: 1 });
     assert.equal(run.decision, DECISION.ABORTED);
@@ -425,12 +402,6 @@ describe('manual overrides', () => {
     assert.equal(p.basesMatch, true);
     assert.equal(p.bobRandom, false);
     assert.equal(p.bobBit, p.aliceBit);
-  });
-
-  it('wins over fixed-basis mode', () => {
-    const run = P.runProtocol({ photons: 5, fixedBasis: true }, { aliceBasis: { 0: DIAG } });
-    assert.equal(run.photons[0].aliceBasis, DIAG);
-    assert.equal(run.photons[1].aliceBasis, PLUS);
   });
 
   it('ignores an Eve basis edit when Eve does not intercept', () => {

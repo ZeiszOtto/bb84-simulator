@@ -20,10 +20,12 @@
 
   const isNode = typeof module !== 'undefined' && module.exports;
   const protocol = isNode ? require('./protocol.js') : (global.BB84 && global.BB84.protocol);
-  if (!protocol) {
-    throw new Error('ui-table.js: load protocol.js before ui-table.js');
+  const common = isNode ? require('./ui-common.js') : (global.BB84 && global.BB84.ui && global.BB84.ui.common);
+  if (!protocol || !common) {
+    throw new Error('ui-table.js: load protocol.js and ui-common.js before ui-table.js');
   }
   const { BASIS, DECISION } = protocol;
+  const { el, basisText, photonGlyph } = common;
 
   // ---------------------------------------------------------------------------
   // Model: rows and cells
@@ -62,19 +64,6 @@
 
   /** A cell of a step that has not been reached yet. */
   const FUTURE = Object.freeze({ text: '·', classes: ['is-future'], title: '' });
-
-  /** How a basis is shown on screen: '+' or '×'. */
-  function basisText(basis) {
-    return basis === BASIS.RECTILINEAR ? '+' : '×';
-  }
-
-  /** The symbol of a polarized photon: — (0°), | (90°), / (45°), \ (135°). */
-  function photonGlyph(basis, bit) {
-    if (basis === BASIS.RECTILINEAR) {
-      return bit ? '|' : '—';
-    }
-    return bit ? '\\' : '/';
-  }
 
   /** How a value of an editable field is shown on screen. */
   function valueText(field, value) {
@@ -226,6 +215,7 @@
 
         const cells = run.photons.map((p) => {
           const base = reached ? describeCell(row.id, p, ctx) : FUTURE;
+          // Copy the class list: FUTURE is shared by many cells and must not change.
           const cell = { text: base.text, classes: [...base.classes], title: base.title, edit: null };
           if (isDimmed(p)) {
             cell.classes.push('is-dimmed');
@@ -260,18 +250,6 @@
   // ---------------------------------------------------------------------------
   // View: DOM rendering
   // ---------------------------------------------------------------------------
-
-  /** Creates an element with an optional class name and text. */
-  function el(tag, className, text) {
-    const node = document.createElement(tag);
-    if (className) {
-      node.className = className;
-    }
-    if (text !== undefined && text !== '') {
-      node.textContent = text;
-    }
-    return node;
-  }
 
   /**
    * Draws the protocol table into an existing <table> element.
@@ -412,12 +390,11 @@
     }
   }
 
-  const api = { ROWS, TITLES, basisText, photonGlyph, nextValue, describeCell, buildModel, ProtocolTable };
+  const api = { ROWS, TITLES, nextValue, describeCell, buildModel, ProtocolTable };
 
   if (isNode) {
     module.exports = api;
   } else {
-    global.BB84 = global.BB84 || {};
     global.BB84.ui = global.BB84.ui || {};
     global.BB84.ui.table = api;
   }
