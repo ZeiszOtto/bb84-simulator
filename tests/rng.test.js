@@ -33,17 +33,17 @@ describe('hashSeed', () => {
 });
 
 
-describe('createRng', () => {
+describe('createRNG', () => {
   it('reproduces the same sequence for the same seed', () => {
-    assert.deepEqual(take(rng.createRng('x').next, 100), take(rng.createRng('x').next, 100));
+    assert.deepEqual(take(rng.createRNG('x').next, 100), take(rng.createRNG('x').next, 100));
   });
  
   it('produces different sequences for different seeds', () => {
-    assert.notDeepEqual(take(rng.createRng('x').next, 20), take(rng.createRng('y').next, 20));
+    assert.notDeepEqual(take(rng.createRNG('x').next, 20), take(rng.createRNG('y').next, 20));
   });
  
   it('keeps every value in its range', () => {
-    const g = rng.createRng('range');
+    const g = rng.createRNG('range');
     for (let i = 0; i < 10000; i++) {
       const x = g.next();
       assert.ok(x >= 0 && x < 1, `next() gave ${x}`);
@@ -55,7 +55,7 @@ describe('createRng', () => {
   });
  
   it('produces fair bits', () => {
-    const g = rng.createRng('fair');
+    const g = rng.createRNG('fair');
     const n = 100000;
     let ones = 0;
     for (let i = 0; i < n; i++) {
@@ -67,7 +67,7 @@ describe('createRng', () => {
   });
  
   it('handles the edge cases of chance(p)', () => {
-    const g = rng.createRng('chance');
+    const g = rng.createRNG('chance');
     for (let i = 0; i < 1000; i++) {
       assert.equal(g.chance(0), false);
       assert.equal(g.chance(1), true);
@@ -77,7 +77,7 @@ describe('createRng', () => {
   });
  
   it('rejects invalid arguments', () => {
-    const g = rng.createRng('bad');
+    const g = rng.createRNG('bad');
     assert.throws(() => g.int(0), RangeError);
     assert.throws(() => g.int(2.5), RangeError);
     assert.throws(() => g.pick([]), RangeError);

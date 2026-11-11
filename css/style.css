@@ -261,7 +261,7 @@ button, input {
 /* 5. Settings and form controls                                              */
 /* ========================================================================== */
 
-/* Five groups of settings: one row on wide screens, wrapping on narrow ones */
+/* Four groups of settings: one row on wide screens, wrapping on narrow ones */
 .settings-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));

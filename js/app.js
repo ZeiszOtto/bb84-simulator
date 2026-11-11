@@ -27,7 +27,7 @@
   const EVE_STEP = 3;
 
   /**
-   * Names of the 8 steps. The soft hyphen (­) lets the long word break
+   * Names of the 8 steps. The soft hyphen (\u00AD) lets the long word break
    * in a narrow step button.
    */
   const STEP_TITLES = [
@@ -36,7 +36,7 @@
     'Eve mérése',
     'Bob bázisai',
     'Bob mérése',
-    'Bázis­egyeztetés',
+    'Bázis\u00ADegyeztetés',
     'Ellenőrzés',
     'Döntés'
   ];
@@ -254,7 +254,7 @@
     }
 
     // Read out by screen readers; the soft hyphen is removed for them.
-    els.stepStatus.textContent = `${state.step}. lépés: ${STEP_TITLES[state.step - 1].replace('­', '')}`;
+    els.stepStatus.textContent = `${state.step}. lépés: ${STEP_TITLES[state.step - 1].replace('\u00AD', '')}`;
   }
 
   /** Writes a value into a result field, with an optional ok/bad color. */

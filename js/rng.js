@@ -10,10 +10,10 @@
    */
   function hashSeed(input) {
     const str = String(input ?? '');
-    let hash = 0x811c9dc5; // FNV-1a 32-bit hash
+    let hash = 0x811c9dc5; // FNV-1a offset basis
     for (let i = 0; i < str.length; i++) {
-        hash ^= str.charCodeAt(i);
-        hash = Math.imul(hash, 0x01000193); // FNV prime
+      hash ^= str.charCodeAt(i);
+      hash = Math.imul(hash, 0x01000193); // FNV prime
     }
     return hash >>> 0;
   }
@@ -27,11 +27,11 @@
    */
   function mulberry32(state) {
     let a = state >>> 0;
-    return function() {
-        a = (a + 0x6d2b79f5) | 0;
-        let t = Math.imul(a ^ (a >>> 15), 1 | a);
-        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    return function () {
+      a = (a + 0x6d2b79f5) | 0;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
     };
   }
 
@@ -52,34 +52,34 @@
     const next = mulberry32(hashSeed(seed));
 
     return {
-        /** Float in [0, 1). */
-        next,
-        
-        /** Integer in [0, n). */
-        int(n) {
-            if (!Number.isInteger(n) || n <= 0) {
-                throw new RangeError('int(n) expects a positive integer, got ' + n);
-            }
-            return Math.floor(next() * n);
-        },
-        
-        /** Fair random bit: 0 or 1. */
-        bit() {
-            return next() < 0.5 ? 0 : 1;
-        },
+      /** Float in [0, 1). */
+      next,
 
-        /** True with probability p (clamped to [0, 1]). */
-        chance(p) {
-            return next() < Math.min(1, Math.max(0, p));
-        },
-
-        /** Uniformly random element of a non-empty array. */
-        pick(items) {
-            if (!Array.isArray(items) || items.length === 0) {
-            throw new RangeError('pick(items) expects a non-empty array');
-            }
-            return items[Math.floor(next() * items.length)];
+      /** Integer in [0, n). */
+      int(n) {
+        if (!Number.isInteger(n) || n <= 0) {
+          throw new RangeError('int(n) expects a positive integer, got ' + n);
         }
+        return Math.floor(next() * n);
+      },
+
+      /** Fair random bit: 0 or 1. */
+      bit() {
+        return next() < 0.5 ? 0 : 1;
+      },
+
+      /** True with probability p (clamped to [0, 1]). */
+      chance(p) {
+        return next() < Math.min(1, Math.max(0, p));
+      },
+
+      /** Uniformly random element of a non-empty array. */
+      pick(items) {
+        if (!Array.isArray(items) || items.length === 0) {
+          throw new RangeError('pick(items) expects a non-empty array');
+        }
+        return items[Math.floor(next() * items.length)];
+      }
     };
   }
 
@@ -112,9 +112,9 @@
     }
     return String(1000 + Math.floor(r * 9000));
   }
- 
+
   const api = { hashSeed, createRNG, stream, randomSeed };
- 
+
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = api;
   } else {
