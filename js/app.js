@@ -9,7 +9,6 @@
  * Every handler only changes `state` and then calls render().
  * render() recomputes the run from the state and redraws everything,
  * so the page can never get out of sync with the state.
- *
  */
 (function (global) {
   'use strict';

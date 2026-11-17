@@ -1,0 +1,12 @@
+{
+  "name": "bb84-simulator",
+  "version": "1.0.0",
+  "description": "Interactive, step-by-step BB84 quantum key distribution simulator.",
+  "private": true,
+  "scripts": {
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

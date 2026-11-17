@@ -19,9 +19,6 @@
  * probability eveRate, measures it in a random basis, and sends Bob a new
  * photon prepared in her basis with her measured bit.
  * Expected QBER on the sifted key: eveRate / 4.
- *
- * Works as a classic browser script (exposes window.BB84.protocol; rng.js
- * must be loaded first) and as a Node.js module for the test suite.
  */
 (function (global) {
   'use strict';
@@ -104,7 +101,7 @@
   // ---------------------------------------------------------------------------
 
   /**
-   * The one quantum rule the simulator needs: measuring a BB84 photon.
+     * The one quantum rule the simulator needs: measuring a BB84 photon.
    *
    * @param {{basis: string, bit: (0|1)}} photon - The photon's prepared state.
    * @param {string} measBasis - The basis the receiver measures in.

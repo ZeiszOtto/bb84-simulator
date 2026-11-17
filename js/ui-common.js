@@ -3,8 +3,7 @@
  * ui-channel.js and app.js): finding and creating elements, and formatting
  * values for display.
  *
- * Works as a classic browser script (exposes window.BB84.ui.common;
- * protocol.js must be loaded first) and as a Node.js module for the tests.
+ * Works as a classic browser script and as a Node.js module for the tests.
  * The element helpers need a browser; the formatting helpers work anywhere.
  */
 (function (global) {

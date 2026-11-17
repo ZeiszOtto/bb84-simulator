@@ -1,3 +1,15 @@
+/**
+ * rng.js — Seeded random numbers, so that every run can be repeated.
+ *
+ * The seed is hashed to a 32-bit state (FNV-1a) that drives
+ * a small generator (mulberry32). The same seed always produces the same 
+ * sequence, so a run can be repeated, shared and tested.
+ *
+ * Every party draws from its own named stream (stream(seed, 'alice'), ...),
+ * so the random choices of one party never shift those of another.
+ *
+ * [Not cryptographically secure]
+ */
 (function (global) {
   'use strict';
 
@@ -98,7 +110,7 @@
 
 
   /**
-   * Generates a fresh, human-friendly 4-digit seed for the "Random" button.
+   * Generates a fresh 4-digit seed for the "Random" button.
    * Uses the Web Crypto API when available, Math.random() otherwise.
    *
    * @returns {string} A seed between "1000" and "9999".

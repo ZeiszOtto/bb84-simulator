@@ -13,7 +13,7 @@
  * after every change. A click only produces a request such as
  * { field: 'aliceBit', index: 2, value: 0 }; app.js decides what to do with it.
  *
- * The CSS classes used here are defined in css/style.css (section 10).
+ * The CSS classes used here are defined in css/style.css.
  */
 (function (global) {
   'use strict';

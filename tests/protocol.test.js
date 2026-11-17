@@ -1,15 +1,6 @@
 /**
  * Tests for js/protocol.js.
  * Run all tests from the project root with:  node --test
- *
- * Four kinds of tests:
- *   1. Unit tests of the small functions (measure, angleOf, normalizeSettings).
- *   2. A regression test that pins the demo run, so accidental changes show up.
- *   3. Rule tests: properties that must hold for EVERY run, checked over many
- *      different seeds and settings.
- *   4. Statistical tests of the physics over many photons (e.g. QBER = eveRate / 4).
- *      They use fixed seeds, so they are deterministic. Their tolerances are a
- *      few standard deviations wide, so they would also pass with other seeds.
  */
 'use strict';
 
