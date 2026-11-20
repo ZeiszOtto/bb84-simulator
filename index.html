@@ -9,7 +9,7 @@
 </head>
 <body>
   <noscript>
-    <p class="noscript">A szimulátor futtatásához engedélyezni kell a JavaScriptet.</p>
+    <p class="noscript">A szimulátor futtatásához engedélyezni kell a JavaScriptet. · JavaScript is required to run the simulator.</p>
   </noscript>
 
   <header class="app-header">
@@ -20,8 +20,13 @@
         <line class="brand-diag" x1="9.5" y1="26.5" x2="26.5" y2="9.5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
       </svg>
       <div>
-        <h1 class="brand-title">BB84 kvantumkulcs-szétosztás szimulátor</h1>
-        <p class="brand-subtitle">Kvantuminformatikai alkalmazások</p>
+        <h1 class="brand-title" data-i18n="header.title">BB84 kvantumkulcs-szétosztás szimulátor</h1>
+        <p class="brand-subtitle" data-i18n="header.subtitle">Interaktív, léptethető szimuláció lehallgatóval</p>
+      </div>
+      <!-- Language switch: each button names its language in that language -->
+      <div class="lang-switch" id="lang-switch" role="group" aria-label="Nyelv" data-i18n-label="lang.label">
+        <button type="button" data-lang="hu" lang="hu" title="Magyar" aria-pressed="true">HU</button>
+        <button type="button" data-lang="en" lang="en" title="English" aria-pressed="false">EN</button>
       </div>
     </div>
   </header>
@@ -32,12 +37,12 @@
     <!-- Settings of the run, in one row on wide screens                     -->
     <!-- =================================================================== -->
     <section class="panel" aria-labelledby="settings-title">
-      <h2 id="settings-title">Beállítások</h2>
+      <h2 id="settings-title" data-i18n="settings.title">Beállítások</h2>
       <div class="settings-grid">
 
         <div class="field">
           <div class="field-head">
-            <label for="photons">Fotonok száma</label>
+            <label for="photons" data-i18n="settings.photons">Fotonok száma</label>
             <output id="photons-out" for="photons">12</output>
           </div>
           <input id="photons" type="range" min="8" max="32" step="1" value="12">
@@ -46,15 +51,15 @@
         <div class="eve-group">
           <div class="switch-row">
             <label for="eve-enabled">
-              <span class="switch-title">Lehallgató (Eve)</span>
-              <span class="hint">Elfogja, megméri és újraküldi a fotonokat</span>
+              <span class="switch-title" data-i18n="settings.eve">Lehallgató (Eve)</span>
+              <span class="hint" data-i18n="settings.eveHint">Elfogja, megméri és újraküldi a fotonokat</span>
             </label>
             <input id="eve-enabled" type="checkbox" role="switch">
           </div>
           <!-- Enabled only while Eve is switched on -->
           <div class="field is-disabled" id="eve-rate-field">
             <div class="field-head">
-              <label for="eve-rate">Lehallgatási arány</label>
+              <label for="eve-rate" data-i18n="settings.eveRate">Lehallgatási arány</label>
               <output id="eve-rate-out" for="eve-rate">100%</output>
             </div>
             <input id="eve-rate" type="range" min="0" max="100" step="10" value="100" disabled>
@@ -63,20 +68,20 @@
 
         <div class="field">
           <div class="field-head">
-            <label for="threshold">QBER-küszöb</label>
+            <label for="threshold" data-i18n="settings.threshold">QBER-küszöb</label>
             <output id="threshold-out" for="threshold">11%</output>
           </div>
           <input id="threshold" type="range" min="5" max="25" step="1" value="11">
-          <span class="hint">E fölötti hibaaránynál a kulcsot eldobják</span>
+          <span class="hint" data-i18n="settings.thresholdHint">Ha a hibaarány eléri, a kulcsot eldobják</span>
         </div>
 
         <div class="field">
-          <label for="seed">Seed</label>
+          <label for="seed" data-i18n="settings.seed">Seed</label>
           <div class="seed-row">
             <input id="seed" type="text" value="1150" autocomplete="off" spellcheck="false">
-            <button id="seed-random" type="button">Véletlen</button>
+            <button id="seed-random" type="button" data-i18n="settings.random">Véletlen</button>
           </div>
-          <span class="hint">Azonos seed mindig azonos futást ad</span>
+          <span class="hint" data-i18n="settings.seedHint">Azonos seed mindig azonos futást ad</span>
         </div>
 
       </div>
@@ -87,10 +92,10 @@
     <!-- =================================================================== -->
     <section class="panel" aria-labelledby="steps-title">
       <div class="panel-head steps-head">
-        <h2 id="steps-title">A protokoll lépései</h2>
-        <div class="step-nav" role="group" aria-label="Léptetés">
-          <button id="step-prev" type="button">Előző</button>
-          <button id="step-next" type="button" class="primary">Következő lépés</button>
+        <h2 id="steps-title" data-i18n="steps.title">A protokoll lépései</h2>
+        <div class="step-nav" role="group" aria-label="Léptetés" data-i18n-label="steps.navLabel">
+          <button id="step-prev" type="button" data-i18n="steps.prev">Előző</button>
+          <button id="step-next" type="button" class="primary" data-i18n="steps.next">Következő lépés</button>
         </div>
       </div>
       <ol class="step-list" id="step-list">
@@ -109,14 +114,14 @@
       <!-- Running results: they fill in as the steps reach them -->
       <div class="results">
         <dl class="metrics">
-          <div><dt>Szűrt bitek</dt><dd id="metric-sifted">–</dd></div>
-          <div><dt>Ellenőrzött bitek</dt><dd id="metric-sampled">–</dd></div>
-          <div><dt>Eltérés a mintában</dt><dd id="metric-sample-errors">–</dd></div>
-          <div><dt>Végső kulcs</dt><dd id="metric-key">–</dd></div>
+          <div><dt data-i18n="results.sifted">Szűrt bitek</dt><dd id="metric-sifted">–</dd></div>
+          <div><dt data-i18n="results.sampled">Ellenőrzött bitek</dt><dd id="metric-sampled">–</dd></div>
+          <div><dt data-i18n="results.sampleErrors">Eltérés a mintában</dt><dd id="metric-sample-errors">–</dd></div>
+          <div><dt data-i18n="results.key">Végső kulcs</dt><dd id="metric-key">–</dd></div>
         </dl>
         <div class="qber" id="qber">
           <div class="qber-head">
-            <span>QBER (hibaarány a mintában)</span>
+            <span data-i18n="results.qber">QBER (hibaarány a mintában)</span>
             <strong id="qber-value">–</strong>
           </div>
           <div class="qber-bar" aria-hidden="true">
@@ -131,29 +136,29 @@
         </div>
       </div>
 
-      <p class="hint">Tipp: a ← és → billentyűkkel is léptethetsz, a lépésekre kattintva pedig bármelyikre ugorhatsz.</p>
+      <p class="hint" data-i18n="steps.tip">Tipp: a ← és → billentyűkkel is léptethetsz, a lépésekre kattintva pedig bármelyikre ugorhatsz.</p>
     </section>
 
     <!-- =================================================================== -->
     <!-- Channels: Alice -> (Eve) -> Bob, and the public channel below       -->
     <!-- =================================================================== -->
     <section class="panel" aria-labelledby="channel-title">
-      <h2 id="channel-title">Csatornák</h2>
+      <h2 id="channel-title" data-i18n="channel.title">Csatornák</h2>
       <div class="channel">
-        <div class="node" id="node-alice"><strong>Alice</strong><span>küldő</span></div>
+        <div class="node" id="node-alice"><strong>Alice</strong><span data-i18n="channel.sender">küldő</span></div>
         <div class="link">
           <div class="photon-track" id="track-1" aria-hidden="true"></div>
           <span class="link-caption" id="track-1-caption">A fotonok a 2. lépésben indulnak</span>
         </div>
-        <div class="node node-eve" id="node-eve" hidden><strong>Eve</strong><span>elfog · mér · újraküld</span></div>
+        <div class="node node-eve" id="node-eve" hidden><strong>Eve</strong><span data-i18n="channel.eveRole">elfog · mér · újraküld</span></div>
         <div class="link" id="link-eve-bob" hidden>
           <div class="photon-track" id="track-2" aria-hidden="true"></div>
           <span class="link-caption" id="track-2-caption"></span>
         </div>
-        <div class="node" id="node-bob"><strong>Bob</strong><span>fogadó</span></div>
+        <div class="node" id="node-bob"><strong>Bob</strong><span data-i18n="channel.receiver">fogadó</span></div>
       </div>
       <div class="public-channel" id="public-channel">
-        <span class="panel-label">Nyilvános csatorna</span>
+        <span class="panel-label" data-i18n="channel.public">Nyilvános csatorna</span>
         <span id="public-text">Még nincs forgalom. A 6. lépéstől itt egyeztetik a bázisokat és az ellenőrző biteket.</span>
       </div>
     </section>
@@ -163,28 +168,28 @@
     <!-- =================================================================== -->
     <section class="panel" aria-labelledby="table-title">
       <div class="panel-head">
-        <h2 id="table-title">Protokolltáblázat</h2>
+        <h2 id="table-title" data-i18n="table.title">Protokolltáblázat</h2>
         <div class="panel-head-side">
           <span class="panel-meta" id="table-meta"></span>
           <!-- Only shown after user has edited a cell -->
-          <button id="reset-edits" type="button" class="link-button" hidden>Kézi módosítások törlése</button>
+          <button id="reset-edits" type="button" class="link-button" data-i18n="table.resetEdits" hidden>Kézi módosítások törlése</button>
         </div>
       </div>
       <div class="table-scroll">
         <table class="protocol-table" id="protocol-table">
-          <caption class="sr-only">A protokoll lépései fotononként</caption>
+          <caption class="sr-only" data-i18n="table.caption">A protokoll lépései fotononként</caption>
           <thead></thead>
           <tbody></tbody>
         </table>
       </div>
       <ul class="legend">
-        <li><span class="swatch basis-plus">+</span>egyenes bázis: — = 0, | = 1</li>
-        <li><span class="swatch basis-diag">×</span>átlós bázis: / = 0, \ = 1</li>
-        <li><span class="swatch is-random"></span>véletlen mérési eredmény</li>
-        <li><span class="swatch is-disturbed"></span>Eve által megváltoztatott foton</li>
-        <li><span class="swatch is-error"></span>Alice bitjétől eltérő bit</li>
-        <li><span class="swatch-text match">=</span><span class="swatch-text mismatch">≠</span>ellenőrzött bit egyezik / eltér</li>
-        <li><span class="swatch-text edit">✎</span>kattintással átírható sor</li>
+        <li><span class="swatch basis-plus">+</span><span data-i18n="legend.plus">egyenes bázis: — = 0, | = 1</span></li>
+        <li><span class="swatch basis-diag">×</span><span data-i18n="legend.diag">átlós bázis: / = 0, \ = 1</span></li>
+        <li><span class="swatch is-random"></span><span data-i18n="legend.random">véletlen mérési eredmény</span></li>
+        <li><span class="swatch is-disturbed"></span><span data-i18n="legend.disturbed">Eve által megváltoztatott foton</span></li>
+        <li><span class="swatch is-error"></span><span data-i18n="legend.error">Alice bitjétől eltérő bit</span></li>
+        <li><span class="swatch-text match">=</span><span class="swatch-text mismatch">≠</span><span data-i18n="legend.check">ellenőrzött bit egyezik / eltér</span></li>
+        <li><span class="swatch-text edit">✎</span><span data-i18n="legend.edit">kattintással átírható sor</span></li>
       </ul>
     </section>
 
@@ -192,15 +197,15 @@
     <!-- Final key and decision (shown in step 8)                            -->
     <!-- =================================================================== -->
     <section class="panel" aria-labelledby="key-title">
-      <h2 id="key-title">Kulcs és döntés</h2>
-      <p class="hint" id="key-pending">A végső kulcs és a döntés a 8. lépésben jelenik meg.</p>
+      <h2 id="key-title" data-i18n="key.title">Kulcs és döntés</h2>
+      <p class="hint" id="key-pending" data-i18n="key.pending">A végső kulcs és a döntés a 8. lépésben jelenik meg.</p>
       <div class="key-final" id="key-final" hidden>
         <div class="key-row">
-          <span class="key-label">Alice kulcsa</span>
+          <span class="key-label" data-i18n="key.alice">Alice kulcsa</span>
           <div class="key-bits" id="key-alice"></div>
         </div>
         <div class="key-row">
-          <span class="key-label">Bob kulcsa</span>
+          <span class="key-label" data-i18n="key.bob">Bob kulcsa</span>
           <div class="key-bits" id="key-bob"></div>
         </div>
         <p class="hint" id="key-note" hidden></p>
@@ -213,11 +218,12 @@
   </main>
 
   <footer class="app-footer">
-    <p>BB84 kvantumkulcs-szétosztás szimuláció · Zeisz Ottó · HP9G2J</p>
+    <p><span data-i18n="footer.text">BB84 kvantumkulcs-szétosztás szimulátor · Zeisz Ottó</span> · <a href="https://github.com/ZeiszOtto/bb84-simulator">GitHub</a></p>
   </footer>
 
   <script src="js/rng.js"></script>
   <script src="js/protocol.js"></script>
+  <script src="js/i18n.js"></script>
   <script src="js/ui-common.js"></script>
   <script src="js/ui-table.js"></script>
   <script src="js/ui-channel.js"></script>

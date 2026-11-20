@@ -179,6 +179,45 @@ button, input {
   color: var(--faint);
 }
 
+.app-footer a {
+  color: var(--muted);
+}
+
+/* Language switch: two small buttons at the right end of the header */
+.lang-switch {
+  display: flex;
+  flex: none;
+  margin-left: auto;
+  padding: 3px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.lang-switch button {
+  min-height: 32px;
+  padding: 0 12px;
+  background: transparent;
+  border: 0;
+  border-radius: 7px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  transition: none;      /* the starting language must not fade in after load */
+}
+
+.lang-switch button:hover {
+  background: var(--panel-3);
+  color: var(--text);
+}
+
+/* After :hover, so the current language keeps its look under the mouse */
+.lang-switch button[aria-pressed="true"] {
+  background: var(--text);
+  color: var(--bg);
+}
+
 .noscript {
   margin: 24px;
   padding: 16px;

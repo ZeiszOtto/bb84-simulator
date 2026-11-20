@@ -29,6 +29,9 @@ Open `index.html` and it runs.
   final keys side by side, and a note when an error slipped past the check
   into the key.
 - **Adjustable.** 8–32 photons, a QBER threshold of 5–25%.
+- **English and Hungarian.** Switch the language in the header. The page
+  starts in the browser's language; `index.html?lang=hu` opens it in
+  Hungarian.
 
 
 ## How BB84 works
@@ -60,16 +63,16 @@ error rate of 25%, so the expected QBER is *interception rate / 4*.
 
 The 8 steps in the app:
 
-| #   | In the app      | What happens                                              |
-| --- | --------------- | --------------------------------------------------------- |
-| 1   | Alice bitjei    | Alice picks random bits                                   |
-| 2   | Alice bázisai   | Alice picks random bases and sends the photons            |
-| 3   | Eve mérése      | Eve intercepts, measures and resends (skipped without Eve) |
-| 4   | Bob bázisai     | Bob picks random measurement bases                        |
-| 5   | Bob mérése      | Bob measures the photons                                  |
-| 6   | Bázisegyeztetés | The bases are compared in public; mismatches are dropped  |
-| 7   | Ellenőrzés      | Half of the sifted bits are compared; this gives the QBER |
-| 8   | Döntés          | The key is accepted or discarded                          |
+| #   | In the app        | What happens                                               |
+| --- | ----------------- | ---------------------------------------------------------- |
+| 1   | Alice's bits      | Alice picks random bits                                    |
+| 2   | Alice's bases     | Alice picks random bases and sends the photons             |
+| 3   | Eve's measurement | Eve intercepts, measures and resends (skipped without Eve) |
+| 4   | Bob's bases       | Bob picks random measurement bases                         |
+| 5   | Bob's measurement | Bob measures the photons                                   |
+| 6   | Basis comparison  | The bases are compared in public; mismatches are dropped   |
+| 7   | Error check       | Half of the sifted bits are compared; this gives the QBER  |
+| 8   | Decision          | The key is accepted or discarded                           |
 
 
 ## Running it
@@ -91,7 +94,7 @@ The tests need Node.js 20 or newer. There is nothing to install.
 npm test        # or: node --test
 ```
 
-The 75 tests use Node's built-in test runner (`node:test`):
+The 84 tests use Node's built-in test runner (`node:test`):
 
 - **Unit tests** of the protocol, the random generator and the UI helpers.
   They run without a browser.
@@ -101,22 +104,6 @@ The 75 tests use Node's built-in test runner (`node:test`):
   settings, for example "no errors without an interception".
 - **Statistical tests** on 100 000 photons, for example that the error rate
   is *interception rate / 4* within four standard deviations.
-
-
-## Project structure
-
-```text
-index.html            page layout
-css/style.css         styles: dark theme, responsive layout
-js/rng.js             seeded random numbers (FNV-1a hash + mulberry32)
-js/protocol.js        the BB84 protocol: pure functions, no DOM
-js/ui-common.js       small helpers shared by the UI scripts
-js/ui-table.js        the protocol table
-js/ui-channel.js      the quantum channel and the public channel
-js/app.js             state, event handling, rendering
-tests/                test suites (node:test)
-docs/screenshot.png   the screenshot above
-```
 
 ## Limitations
 

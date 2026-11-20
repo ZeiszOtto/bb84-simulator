@@ -18,12 +18,17 @@
 
   const isNode = typeof module !== 'undefined' && module.exports;
   const protocol = isNode ? require('./protocol.js') : (global.BB84 && global.BB84.protocol);
+  const i18n = isNode ? require('./i18n.js') : (global.BB84 && global.BB84.i18n);
   const common = isNode ? require('./ui-common.js') : (global.BB84 && global.BB84.ui && global.BB84.ui.common);
-  if (!protocol || !common) {
-    throw new Error('ui-channel.js: load protocol.js and ui-common.js before ui-channel.js');
+  if (!protocol || !i18n || !common) {
+    throw new Error('ui-channel.js: load protocol.js, i18n.js and ui-common.js before ui-channel.js');
   }
   const { BASIS, DECISION } = protocol;
-  const { byId, el, photonGlyph, photonList } = common;
+  const { t } = i18n;
+  const { byId, el, photonGlyph } = common;
+
+  /** 1-based photon numbers for the texts, from 0-based indices. */
+  const numbers = (indices) => indices.map((i) => i + 1);
 
   // ---------------------------------------------------------------------------
   // Model
@@ -55,34 +60,30 @@
   /** What is said on the public channel in a step. */
   function publicText(run, step) {
     if (step < 6) {
-      return 'Még nincs forgalom. A 6. lépéstől itt egyeztetik a bázisokat és az ellenőrző biteket.';
+      return t('public.quiet');
     }
 
     if (step === 6) {
       const kept = run.siftedIndices;
       const text = kept.length === 0
-        ? 'Bob bemondja a bázisait, de egyik sem egyezik Alice bázisával.'
-        : `Bob bemondja a bázisait, Alice pedig megmondja, hol egyeznek: ${photonList(kept)} fotonnál. ` +
-          'Biteket nem mondanak ki.';
-      return run.settings.eveEnabled
-        ? `${text} Eve is hallja, de már késő: a fotonokat korábban kellett megmérnie.`
-        : text;
+        ? t('public.noMatch')
+        : t('public.match', { photons: numbers(kept) });
+      return run.settings.eveEnabled ? `${text} ${t('public.eveListens')}` : text;
     }
 
     if (step === 7) {
       return run.sampleIndices.length === 0
-        ? 'Nincs ellenőrizhető bit.'
-        : `Összevetik ${photonList(run.sampleIndices)} foton bitjét. Ezek a bitek nyilvánossá váltak, ` +
-          'ezért kimaradnak a kulcsból.';
+        ? t('public.noSample')
+        : t('public.sample', { photons: numbers(run.sampleIndices) });
     }
 
     switch (run.decision) {
       case DECISION.ACCEPTED:
-        return 'Döntés: a kulcsot elfogadják. A ki nem mondott szűrt bitekből lesz a közös titkos kulcs.';
+        return t('public.accepted');
       case DECISION.ABORTED:
-        return 'Döntés: a kulcsot eldobják, és újrakezdik a protokollt.';
+        return t('public.aborted');
       default:
-        return 'Döntés: kevés a bit a döntéshez, újra kell futtatni a protokollt.';
+        return t('public.insufficient');
     }
   }
 
@@ -108,9 +109,9 @@
       : [];
     const changed = run.photons.filter((p) => p.eveRandom).length;
 
-    let secondCaption = 'Eve még nem küldött tovább fotont';
+    let secondCaption = t('channel.notResent');
     if (step >= 3) {
-      secondCaption = changed > 0 ? `${changed} foton megváltozott` : 'egyik foton sem változott';
+      secondCaption = changed > 0 ? t('channel.changed', { count: changed }) : t('channel.unchanged');
     }
 
     return {
@@ -118,7 +119,7 @@
       showEve: eve,
       firstLink: {
         chips: sent,
-        caption: step >= 2 ? `${n} foton úton ${eve ? 'Eve' : 'Bob'} felé` : 'A fotonok a 2. lépésben indulnak'
+        caption: step >= 2 ? t('channel.onTheWay', { count: n, target: eve ? 'Eve' : 'Bob' }) : t('channel.notSent')
       },
       secondLink: { chips: arriving, caption: secondCaption },
       publicActive: step >= 6,

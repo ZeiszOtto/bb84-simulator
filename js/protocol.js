@@ -101,7 +101,7 @@
   // ---------------------------------------------------------------------------
 
   /**
-     * The one quantum rule the simulator needs: measuring a BB84 photon.
+   * The one quantum rule the simulator needs: measuring a BB84 photon.
    *
    * @param {{basis: string, bit: (0|1)}} photon - The photon's prepared state.
    * @param {string} measBasis - The basis the receiver measures in.

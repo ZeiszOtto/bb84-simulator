@@ -1,7 +1,7 @@
 /**
  * ui-common.js — Small helpers shared by the UI scripts (ui-table.js,
  * ui-channel.js and app.js): finding and creating elements, and formatting
- * values for display.
+ * values for display. Texts in words live in i18n.js.
  *
  * Works as a classic browser script and as a Node.js module for the tests.
  * The element helpers need a browser; the formatting helpers work anywhere.
@@ -53,34 +53,6 @@
     return `${Math.round(fraction * 100)}%`;
   }
 
-  /**
-   * The Hungarian definite article for a number: "az" when the number is
-   * spoken with a leading vowel (egy, öt, ötven..., ötszáz...), "a" otherwise.
-   * Covers 0–999, which is more than the simulator ever shows.
-   */
-  function article(n) {
-    const k = Math.abs(Math.trunc(n));
-    const vowel = k === 1 || k === 5 || (k >= 50 && k <= 59) || (k >= 500 && k <= 599);
-    return vowel ? 'az' : 'a';
-  }
-
-  /**
-   * A list of photons with the article in front, from 0-based indices:
-   *   [2]       -> "a 3."
-   *   [0, 2]    -> "az 1. és 3."
-   *   [1, 2, 6] -> "a 2., 3. és 7."
-   */
-  function photonList(indices) {
-    if (indices.length === 0) {
-      return '';
-    }
-    const names = indices.map((i) => `${i + 1}.`);
-    const list = names.length === 1
-      ? names[0]
-      : `${names.slice(0, -1).join(', ')} és ${names[names.length - 1]}`;
-    return `${article(indices[0] + 1)} ${list}`;
-  }
-
   /** How a basis is shown on screen: '+' or '×'. */
   function basisText(basis) {
     return basis === BASIS.RECTILINEAR ? '+' : '×';
@@ -94,7 +66,7 @@
     return bit ? '\\' : '/';
   }
 
-  const api = { byId, el, percent, article, photonList, basisText, photonGlyph };
+  const api = { byId, el, percent, basisText, photonGlyph };
 
   if (isNode) {
     module.exports = api;

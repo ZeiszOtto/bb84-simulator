@@ -20,11 +20,13 @@
 
   const isNode = typeof module !== 'undefined' && module.exports;
   const protocol = isNode ? require('./protocol.js') : (global.BB84 && global.BB84.protocol);
+  const i18n = isNode ? require('./i18n.js') : (global.BB84 && global.BB84.i18n);
   const common = isNode ? require('./ui-common.js') : (global.BB84 && global.BB84.ui && global.BB84.ui.common);
-  if (!protocol || !common) {
-    throw new Error('ui-table.js: load protocol.js and ui-common.js before ui-table.js');
+  if (!protocol || !i18n || !common) {
+    throw new Error('ui-table.js: load protocol.js, i18n.js and ui-common.js before ui-table.js');
   }
   const { BASIS, DECISION } = protocol;
+  const { t } = i18n;
   const { el, basisText, photonGlyph } = common;
 
   // ---------------------------------------------------------------------------
@@ -32,35 +34,30 @@
   // ---------------------------------------------------------------------------
 
   /**
-   * The rows of the table, top to bottom.
+   * The rows of the table, top to bottom. Their texts are in i18n.js:
+   * the label under 'row.<id>', the actor under 'actor.<actor>'.
    *   step: the protocol step in which the row is filled in
    *   edit: the override field a click changes (editable rows only)
    *   eve:  true for rows that only exist when Eve is enabled
    */
   const ROWS = Object.freeze([
-    { id: 'aliceBit',   label: 'Alice bitje',         actor: 'Alice',             step: 1, edit: 'aliceBit' },
-    { id: 'aliceBasis', label: 'Alice bázisa',        actor: 'Alice',             step: 2, edit: 'aliceBasis' },
-    { id: 'sent',       label: 'Elküldött foton',     actor: 'Alice → csatorna',  step: 2 },
-    { id: 'eveBasis',   label: 'Eve bázisa',          actor: 'Eve',               step: 3, edit: 'eveBasis', eve: true },
-    { id: 'eveBit',     label: 'Eve mért bitje',      actor: 'Eve',               step: 3, eve: true },
-    { id: 'resent',     label: 'Továbbküldött foton', actor: 'Eve → Bob',         step: 3, eve: true },
-    { id: 'bobBasis',   label: 'Bob bázisa',          actor: 'Bob',               step: 4, edit: 'bobBasis' },
-    { id: 'bobBit',     label: 'Bob mért bitje',      actor: 'Bob',               step: 5 },
-    { id: 'match',      label: 'Bázis egyezik?',      actor: 'nyilvános',         step: 6 },
-    { id: 'check',      label: 'Ellenőrzés',          actor: 'nyilvános · minta', step: 7 },
-    { id: 'key',        label: 'Végső kulcs',         actor: 'Alice bitjei',      step: 8 }
+    { id: 'aliceBit',   actor: 'alice',          step: 1, edit: 'aliceBit' },
+    { id: 'aliceBasis', actor: 'alice',          step: 2, edit: 'aliceBasis' },
+    { id: 'sent',       actor: 'aliceToChannel', step: 2 },
+    { id: 'eveBasis',   actor: 'eve',            step: 3, edit: 'eveBasis', eve: true },
+    { id: 'eveBit',     actor: 'eve',            step: 3, eve: true },
+    { id: 'resent',     actor: 'eveToBob',       step: 3, eve: true },
+    { id: 'bobBasis',   actor: 'bob',            step: 4, edit: 'bobBasis' },
+    { id: 'bobBit',     actor: 'bob',            step: 5 },
+    { id: 'match',      actor: 'public',         step: 6 },
+    { id: 'check',      actor: 'publicSample',   step: 7 },
+    { id: 'key',        actor: 'aliceBits',      step: 8 }
   ]);
 
-  /** Tooltips that explain the special cell states. */
-  const TITLES = Object.freeze({
-    eveRandom: 'Véletlen eredmény: Eve rossz bázisban mért',
-    bobRandom: 'Véletlen eredmény: Bob bázisa eltér a beérkező fotonétól',
-    disturbed: 'Eve megváltoztatta a fotont',
-    error: 'Eltér Alice bitjétől',
-    notIntercepted: 'Eve ezt a fotont nem fogta el',
-    unchecked: 'Nem ellenőrzött bit: a kulcsba kerül',
-    discarded: 'A kulcsot eldobták'
-  });
+  /** Tooltip that explains a special cell state, e.g. tip('disturbed'). */
+  function tip(name) {
+    return t(`tip.${name}`);
+  }
 
   /** A cell of a step that has not been reached yet. */
   const FUTURE = Object.freeze({ text: '·', classes: ['is-future'], title: '' });
@@ -87,11 +84,11 @@
     if (disturbed) {
       classes.push('is-disturbed');
     }
-    return { text: photonGlyph(basis, bit), classes, title: disturbed ? TITLES.disturbed : '' };
+    return { text: photonGlyph(basis, bit), classes, title: disturbed ? tip('disturbed') : '' };
   }
 
   function notInterceptedCell() {
-    return { text: '–', classes: ['is-empty'], title: TITLES.notIntercepted };
+    return { text: '–', classes: ['is-empty'], title: tip('notIntercepted') };
   }
 
   function emptyCell() {
@@ -127,7 +124,7 @@
         return {
           text: String(p.eveBit),
           classes: p.eveRandom ? ['is-random'] : [],
-          title: p.eveRandom ? TITLES.eveRandom : ''
+          title: p.eveRandom ? tip('eveRandom') : ''
         };
 
       case 'resent':
@@ -141,12 +138,12 @@
         const titles = [];
         if (p.bobRandom) {
           classes.push('is-random');
-          titles.push(TITLES.bobRandom);
+          titles.push(tip('bobRandom'));
         }
         // Errors are only revealed once the bases have been compared (step 6).
         if (ctx.step >= 6 && p.error) {
           classes.push('is-error');
-          titles.push(TITLES.error);
+          titles.push(tip('error'));
         }
         return { text: String(p.bobBit), classes, title: titles.join('. ') };
       }
@@ -161,10 +158,10 @@
           return emptyCell();
         }
         if (!p.sampled) {
-          return { text: '·', classes: ['is-future'], title: TITLES.unchecked };
+          return { text: '·', classes: ['is-future'], title: tip('unchecked') };
         }
         return p.error
-          ? { text: '≠', classes: ['is-check-bad'], title: TITLES.error }
+          ? { text: '≠', classes: ['is-check-bad'], title: tip('error') }
           : { text: '=', classes: ['is-check-ok'], title: '' };
 
       case 'key':
@@ -173,7 +170,7 @@
         }
         return ctx.accepted
           ? { text: String(p.aliceBit), classes: ['is-key'], title: '' }
-          : { text: String(p.aliceBit), classes: ['is-discarded'], title: TITLES.discarded };
+          : { text: String(p.aliceBit), classes: ['is-discarded'], title: tip('discarded') };
 
       default:
         throw new Error('Unknown table row: ' + rowId);
@@ -205,6 +202,7 @@
     const rows = ROWS
       .filter((row) => !row.eve || eveEnabled)
       .map((row) => {
+        const label = t(`row.${row.id}`);
         const reached = step >= row.step;
         let state = 'done';
         if (row.step === step) {
@@ -231,8 +229,12 @@
               field: row.edit,
               index: p.index,
               value,
-              label: `${p.index + 1}. foton, ${row.label}: ${valueText(row.edit, current)}. ` +
-                `Kattints, hogy ${valueText(row.edit, value)} legyen.`
+              label: t('table.editLabel', {
+                photon: p.index + 1,
+                row: label,
+                current: valueText(row.edit, current),
+                next: valueText(row.edit, value)
+              })
             };
             if (isOverridden(overrides, row.edit, p.index)) {
               cell.classes.push('is-edited');
@@ -241,7 +243,7 @@
           return cell;
         });
 
-        return { id: row.id, label: row.label, actor: row.actor, editable: Boolean(row.edit), state, cells };
+        return { id: row.id, label, actor: t(`actor.${row.actor}`), editable: Boolean(row.edit), state, cells };
       });
 
     return { columns, rows };
@@ -316,7 +318,7 @@
       if (row.editable) {
         const icon = el('span', 'row-edit-icon', '✎');
         icon.setAttribute('aria-hidden', 'true');
-        label.append(icon, el('span', 'sr-only', ' (kattintással átírható)'));
+        label.append(icon, el('span', 'sr-only', t('table.editable')));
       }
       th.append(label, el('span', 'row-actor', row.actor));
       tr.append(th);
@@ -390,7 +392,7 @@
     }
   }
 
-  const api = { ROWS, TITLES, nextValue, describeCell, buildModel, ProtocolTable };
+  const api = { ROWS, nextValue, describeCell, buildModel, ProtocolTable };
 
   if (isNode) {
     module.exports = api;

@@ -7,7 +7,11 @@
 const { describe, it } = require('node:test');
 const assert = require('node:assert/strict');
 const P = require('../js/protocol.js');
+const I = require('../js/i18n.js');
 const CH = require('../js/ui-channel.js');
+
+// The texts below are checked in Hungarian, except where a test switches.
+I.setLang('hu');
 
 describe('active party', () => {
   it('follows the protocol: Alice, Eve, Bob, then the public channel', () => {
@@ -72,5 +76,17 @@ describe('public channel', () => {
     assert.match(CH.publicText(run, 7), /a 4\., 6\. és 10\. foton bitjét/);
     assert.match(CH.publicText(run, 8), /eldobják/);
     assert.match(CH.publicText(P.runProtocol({ eveEnabled: false }), 8), /elfogadják/);
+  });
+
+  it('speaks English when the language is switched', () => {
+    I.setLang('en');
+    try {
+      const run = P.runProtocol({ eveEnabled: true });
+      assert.match(CH.publicText(run, 6), /at photons 3, 4, 6, 8, 9 and 10\./);
+      assert.match(CH.publicText(run, 7), /the bits of photons 4, 6 and 10\./);
+      assert.equal(CH.describeChannel(run, 3).secondLink.caption, '7 photons changed');
+    } finally {
+      I.setLang('hu');
+    }
   });
 });

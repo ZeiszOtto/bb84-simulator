@@ -7,6 +7,7 @@
 const { describe, it } = require('node:test');
 const assert = require('node:assert/strict');
 const P = require('../js/protocol.js');
+const I = require('../js/i18n.js');
 const C = require('../js/ui-common.js');
 const T = require('../js/ui-table.js');
 
@@ -25,6 +26,18 @@ describe('rows', () => {
     assert.equal(withEve.rows.length, 11);
     assert.equal(withoutEve.rows.length, 8);
     assert.ok(withoutEve.rows.every((r) => !r.id.startsWith('eve') && r.id !== 'resent'));
+  });
+
+  it('labels the rows in the current language', () => {
+    const run = P.runProtocol({ eveEnabled: true });
+    I.setLang('en');
+    try {
+      assert.equal(row(T.buildModel(run, 8), 'aliceBit').label, 'Alice’s bit');
+      assert.equal(row(T.buildModel(run, 8), 'check').actor, 'public · sample');
+    } finally {
+      I.setLang('hu');
+    }
+    assert.equal(row(T.buildModel(run, 8), 'aliceBit').label, 'Alice bitje');
   });
 
   it('has one cell per photon in every row and one column per photon', () => {

@@ -14,64 +14,43 @@
   'use strict';
 
   const BB84 = global.BB84 || {};
-  const { protocol, rng } = BB84;
+  const { protocol, rng, i18n } = BB84;
   const ui = BB84.ui || {};
-  if (!protocol || !rng || !ui.common || !ui.table || !ui.channel) {
-    throw new Error('app.js: load rng.js, protocol.js, ui-common.js, ui-table.js and ui-channel.js before app.js');
+  if (!protocol || !rng || !i18n || !ui.common || !ui.table || !ui.channel) {
+    throw new Error('app.js: load rng.js, protocol.js, i18n.js, ui-common.js, ui-table.js and ui-channel.js before app.js');
   }
   const { DECISION } = protocol;
-  const { byId, el, percent, article, photonList } = ui.common;
+  const { t } = i18n;
+  const { byId, el, percent } = ui.common;
 
   const LAST_STEP = 8;
   const EVE_STEP = 3;
 
-  /**
-   * Names of the 8 steps. The soft hyphen (\u00AD) lets the long word break
-   * in a narrow step button.
-   */
-  const STEP_TITLES = [
-    'Alice bitjei',
-    'Alice bázisai',
-    'Eve mérése',
-    'Bob bázisai',
-    'Bob mérése',
-    'Bázis\u00ADegyeztetés',
-    'Ellenőrzés',
-    'Döntés'
-  ];
+  /** Name of a step, e.g. stepTitle(6). The texts are in i18n.js under 'step.1' ... 'step.8'. */
+  function stepTitle(n) {
+    return t(`step.${n}`);
+  }
 
   // ---------------------------------------------------------------------------
   // Texts of the decision
   // ---------------------------------------------------------------------------
 
-  /** "a 11%-os" or "az 5%-os", for the threshold in a sentence. */
-  function thresholdPhrase(threshold) {
-    const n = Math.round(threshold * 100);
-    return `${article(n)} ${n}%-os`;
-  }
-
   /** Title and explanation of the decision of a run. */
   function decisionInfo(run) {
-    const threshold = thresholdPhrase(run.settings.threshold);
+    const values = {
+      qber: run.qber === null ? '' : percent(run.qber),
+      threshold: Math.round(run.settings.threshold * 100),
+      keyLength: run.keyIndices.length
+    };
     switch (run.decision) {
       case DECISION.ACCEPTED:
-        return {
-          title: 'Kulcs elfogadva',
-          text: `A QBER (${percent(run.qber)}) ${threshold} küszöb alatt van. ` +
-            `A maradék ${run.keyIndices.length} bit lesz a közös titkos kulcs.`
-        };
+        return { title: t('decision.acceptedTitle'), text: t('decision.accepted', values) };
       case DECISION.ABORTED:
-        return {
-          title: 'Lehallgatás gyanúja: a kulcsot eldobták',
-          text: `A QBER (${percent(run.qber)}) eléri vagy meghaladja ${threshold} küszöböt, ` +
-            'ezért lehallgatásra kell gyanakodni. A kulcsot eldobják, és újrakezdik a protokollt.'
-        };
+        return { title: t('decision.abortedTitle'), text: t('decision.aborted', values) };
       default:
         return {
-          title: 'Kevés a bit a döntéshez',
-          text: run.qber === null
-            ? 'Egyetlen bit sem került a mintába, így a hibaarány nem becsülhető. Növeld a fotonok számát.'
-            : 'Az ellenőrzés után nem maradt bit a kulcshoz. Növeld a fotonok számát.'
+          title: t('decision.insufficientTitle'),
+          text: run.qber === null ? t('decision.noSample') : t('decision.noKey')
         };
     }
   }
@@ -115,7 +94,8 @@
       keyNote: byId('key-note'),
       decision: byId('decision'),
       decisionTitle: byId('decision-title'),
-      decisionText: byId('decision-text')
+      decisionText: byId('decision-text'),
+      langSwitch: byId('lang-switch')
     };
   }
 
@@ -215,17 +195,25 @@
     const run = protocol.runProtocol(state.settings, state.overrides);
     state.run = run;
 
+    renderLangSwitch();
     renderSteps();
     renderResults(run);
     channel.render(run, state.step);
     table.render(run, state.step, state.overrides);
     renderKey(run);
 
-    els.tableMeta.textContent = `seed ${run.settings.seed || '(üres)'} · ${run.photons.length} foton`;
+    els.tableMeta.textContent = t('table.meta', { seed: run.settings.seed, count: run.photons.length });
     els.resetEdits.hidden = !hasOverrides();
   }
 
-  /** The step list (current, done and skipped steps) and the Előző / Következő buttons. */
+  /** Marks the button of the current language as pressed. */
+  function renderLangSwitch() {
+    for (const button of els.langSwitch.querySelectorAll('button[data-lang]')) {
+      button.setAttribute('aria-pressed', String(button.dataset.lang === i18n.getLang()));
+    }
+  }
+
+  /** The step list (current, done and skipped steps) and the Previous / Next buttons. */
   function renderSteps() {
     els.stepPrev.disabled = previousStep(state.step) === state.step;
     els.stepNext.disabled = state.step === LAST_STEP;
@@ -233,7 +221,7 @@
     for (const button of els.stepList.querySelectorAll('button[data-step]')) {
       const n = Number(button.dataset.step);
       const skipped = isSkipped(n);
-      const label = skipped ? 'Eve · kihagyva' : STEP_TITLES[n - 1];
+      const label = skipped ? t('steps.skipped') : stepTitle(n);
       button.replaceChildren(el('span', 'step-num', String(n)), document.createTextNode(label));
 
       button.classList.toggle('is-done', n < state.step && !skipped);
@@ -245,7 +233,7 @@
       }
       if (skipped) {
         button.setAttribute('aria-disabled', 'true');
-        button.title = 'Kapcsold be Eve-et, hogy ez a lépés is látszódjon';
+        button.title = t('steps.skippedHint');
       } else {
         button.removeAttribute('aria-disabled');
         button.removeAttribute('title');
@@ -253,7 +241,7 @@
     }
 
     // Read out by screen readers; the soft hyphen is removed for them.
-    els.stepStatus.textContent = `${state.step}. lépés: ${STEP_TITLES[state.step - 1].replace('\u00AD', '')}`;
+    els.stepStatus.textContent = t('steps.status', { step: state.step, title: stepTitle(state.step).replace('\u00AD', '') });
   }
 
   /** Writes a value into a result field, with an optional ok/bad color. */
@@ -274,9 +262,9 @@
 
     if (step >= LAST_STEP) {
       if (run.decision === DECISION.ACCEPTED) {
-        setMetric(els.metricKey, `${run.keyIndices.length} bit`, 'ok');
+        setMetric(els.metricKey, t('results.keyBits', { count: run.keyIndices.length }), 'ok');
       } else {
-        setMetric(els.metricKey, run.decision === DECISION.ABORTED ? 'eldobva' : 'nincs', 'bad');
+        setMetric(els.metricKey, run.decision === DECISION.ABORTED ? t('results.discarded') : t('results.none'), 'bad');
       }
     } else {
       setMetric(els.metricKey, '–');
@@ -284,7 +272,7 @@
 
     // The QBER bar: CSS draws it from two numbers (see style.css, section 8).
     els.qber.style.setProperty('--threshold', String(run.settings.threshold));
-    els.qberThresholdLabel.textContent = `küszöb ${percent(run.settings.threshold)}`;
+    els.qberThresholdLabel.textContent = t('results.thresholdLabel', { value: percent(run.settings.threshold) });
     if (step >= 7 && run.qber !== null) {
       els.qber.style.setProperty('--qber', String(run.qber));
       els.qber.dataset.state = run.qber >= run.settings.threshold ? 'over' : 'ok';
@@ -313,8 +301,8 @@
     };
 
     if (run.keyIndices.length === 0) {
-      els.keyAlice.replaceChildren(el('span', 'hint', 'nincs kulcsbit'));
-      els.keyBob.replaceChildren(el('span', 'hint', 'nincs kulcsbit'));
+      els.keyAlice.replaceChildren(el('span', 'hint', t('key.noBits')));
+      els.keyBob.replaceChildren(el('span', 'hint', t('key.noBits')));
     } else {
       els.keyAlice.replaceChildren(...run.keyIndices.map((i) => el('span', bitClass(true), String(run.photons[i].aliceBit))));
       els.keyBob.replaceChildren(...run.keyIndices.map((i) => {
@@ -327,8 +315,7 @@
     const hidden = run.keyIndices.filter((i) => run.photons[i].error);
     els.keyNote.hidden = hidden.length === 0;
     if (hidden.length > 0) {
-      els.keyNote.textContent = `A minta nem talál meg minden hibát: ${photonList(hidden)} foton hibája ` +
-        'a kulcsban maradt. A valódi protokollban ezt hibajavítás kezeli.';
+      els.keyNote.textContent = t('key.hiddenErrors', { photons: hidden.map((i) => i + 1) });
     }
 
     const info = decisionInfo(run);
@@ -397,6 +384,16 @@
       render();
     });
 
+    // Language: rewrite the static texts of the page, then redraw the rest.
+    els.langSwitch.addEventListener('click', (event) => {
+      const button = event.target.closest('button[data-lang]');
+      if (button) {
+        i18n.setLang(button.dataset.lang, true);
+        i18n.translatePage(document);
+        render();
+      }
+    });
+
     // Stepping
     els.stepPrev.addEventListener('click', () => goTo(previousStep(state.step)));
     els.stepNext.addEventListener('click', () => goTo(nextStep(state.step)));
@@ -432,6 +429,9 @@
   // ---------------------------------------------------------------------------
 
   function init() {
+    i18n.setLang(i18n.detectLang());
+    i18n.translatePage(document);
+
     els = findElements();
     readSettingsFromControls();
     updateEveRateField();
